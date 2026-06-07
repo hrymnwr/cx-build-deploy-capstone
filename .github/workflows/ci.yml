@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull-request:
+    branches: [main]
+  push:
+    branches: [main]
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with: 
+          dotnet-version: '8.0.x'
+      # Restore separately so caching + failures are easy to read
+      - name: Retore
+        run: dotnet restore
+      - name: Check formatting (lint gate)
+        run: dotnet format --verify-no-changes
+      - name: Build
+        run: dotnet build --no-retore --configuration Release
+      - name: Test with coverage
+        run: >
+          dotnet test --no-build --configuration Release
+          --collect:"XPlat Code Coverage"
+          --results-directory ./coverage
+      # Quality gate: fail if line coverage < threshold
+      - name: Enforce coverage threshold
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          export PATH="$PATH:/home/runner/.dotnet/tools"
+          reportgenerator \
+            -reports:"./coverage/**/coverage.cobertura.xml" \
+            -targetdir:"./coverage/report" \
+            -reporttypes:"TestSummary"
+          cat ./coverage/report/Summary.txt
+          LINE=$(grep -oP 'Line coverage:\s*\K[0-9.]+' ./coverage/report/Summary.txt)
+          echo "Line coverage: $LINE%"
+          THRESHOLD=70
+          awk "BEGIN{exit !($LINE >= $THRESHOLD)}" || { echo "Coverage $LINE% < $THRESHOLD%"; exit 1; }
+      # Publish the build output as a promotable artifact
+      - name: Publish app
+        run: dotnet publish Widget.Api/Widget.Api.csproj -c Release -o ./publish
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: widget-api-${{ github.sha }}
+          path: ./publish
