@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Widget.Api/Widget.Api.csproj" />
+  <Project Path="Widget.Tests/Widget.Tests.csproj" />
+</Solution>
