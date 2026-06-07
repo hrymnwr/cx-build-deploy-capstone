@@ -35,7 +35,7 @@ jobs:
           reportgenerator \
             -reports:"./coverage/**/coverage.cobertura.xml" \
             -targetdir:"./coverage/report" \
-            -reporttypes:"TestSummary"
+            -reporttypes:"SummaryXml"
           cat ./coverage/report/Summary.txt
           LINE=$(grep -oP 'Line coverage:\s*\K[0-9.]+' ./coverage/report/Summary.txt)
           echo "Line coverage: $LINE%"
