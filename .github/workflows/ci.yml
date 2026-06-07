@@ -1,7 +1,7 @@
 name: CI
 
 on:
-  pull-request:
+  pull_request:
     branches: [main]
   push:
     branches: [main]
@@ -16,12 +16,12 @@ jobs:
         with: 
           dotnet-version: '8.0.x'
       # Restore separately so caching + failures are easy to read
-      - name: Retore
+      - name: Restore
         run: dotnet restore
       - name: Check formatting (lint gate)
         run: dotnet format --verify-no-changes
       - name: Build
-        run: dotnet build --no-retore --configuration Release
+        run: dotnet build --no-restore --configuration Release
       - name: Test with coverage
         run: >
           dotnet test --no-build --configuration Release
